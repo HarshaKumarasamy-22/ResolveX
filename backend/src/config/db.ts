@@ -3,13 +3,17 @@ import { config } from './env';
 
 export const pool = new Pool(
   config.databaseUrl
-    ? { connectionString: config.databaseUrl, ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false }
+    ? {
+        connectionString: config.databaseUrl,
+        ssl: { rejectUnauthorized: false },
+      }
     : {
         host: config.db.host,
         port: config.db.port,
         user: config.db.user,
         password: config.db.password,
         database: config.db.database,
+        ssl: config.db.host.includes('supabase') ? { rejectUnauthorized: false } : false,
       }
 );
 
