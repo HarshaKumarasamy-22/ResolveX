@@ -42,17 +42,34 @@ import { User } from '../../core/models/user.model';
       <!-- Top Title & Controls Header -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">All Service Requests</h1>
-          <p class="text-sm text-slate-500">Triage, assign, and manage lifecycle transitions for all organizational requests.</p>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">All Service Requests</h1>
+            <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded-full">
+              {{ totalRecords() }} Tickets
+            </span>
+          </div>
+          <p class="text-sm text-slate-500 mt-0.5">Triage, assign, and manage lifecycle transitions for all organizational requests.</p>
         </div>
         <div class="flex items-center space-x-2">
+          <!-- Feature 2: Export CSV Button -->
+          <button
+            (click)="exportToCSV()"
+            [disabled]="loading() || requests().length === 0"
+            class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg shadow-sm transition flex items-center gap-1.5 disabled:opacity-50"
+            title="Download current filtered requests as CSV"
+          >
+            <i class="pi pi-download text-emerald-600"></i>
+            <span>Export CSV</span>
+          </button>
+
           <button
             (click)="resetFilters()"
             class="px-3.5 py-2 text-xs font-semibold bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg shadow-sm transition flex items-center gap-1.5"
           >
             <i class="pi pi-filter-slash"></i>
-            <span>Clear Filters</span>
+            <span>Clear</span>
           </button>
+
           <button
             (click)="loadRequests()"
             class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow transition flex items-center gap-1.5"
@@ -74,7 +91,7 @@ import { User } from '../../core/models/user.model';
               type="text"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchChange()"
-              placeholder="Search title or description..."
+              placeholder="Search title, description or requester..."
               class="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-slate-50"
             />
           </div>
@@ -131,7 +148,7 @@ import { User } from '../../core/models/user.model';
           [totalRecords]="totalRecords()"
           [loading]="loading()"
           [rowsPerPageOptions]="[5, 10, 20, 50]"
-          [tableStyle]="{ 'min-width': '60rem' }"
+          [tableStyle]="{ 'min-width': '65rem' }"
           styleClass="p-datatable-sm p-datatable-striped"
         >
           <!-- Table Header -->
@@ -154,7 +171,7 @@ import { User } from '../../core/models/user.model';
               <th pSortableColumn="created_at" class="w-36 py-3 px-4">
                 Created <i class="pi pi-sort-alt text-[10px] ml-1 text-slate-400"></i>
               </th>
-              <th class="w-32 py-3 px-4 text-center">Actions</th>
+              <th class="w-36 py-3 px-4 text-center">Actions</th>
             </tr>
           </ng-template>
 
@@ -164,11 +181,18 @@ import { User } from '../../core/models/user.model';
               <!-- ID -->
               <td class="py-3 px-4 font-mono font-bold text-slate-500">#{{ req.id }}</td>
 
-              <!-- Issue Title & Description -->
+              <!-- Issue Title & Description (Clickable to open Quick-View Drawer) -->
               <td class="py-3 px-4 max-w-xs">
-                <div class="font-semibold text-slate-900 line-clamp-1">{{ req.title }}</div>
-                <div class="text-[11px] text-slate-500 line-clamp-1">{{ req.description }}</div>
-                <div class="text-[10px] text-slate-400 mt-0.5">By: {{ req.requester_name }} ({{ req.requester_email }})</div>
+                <div
+                  (click)="openQuickViewDialog(req)"
+                  class="font-bold text-slate-900 line-clamp-1 cursor-pointer hover:text-blue-600 transition flex items-center gap-1.5"
+                  title="Click to view full ticket details"
+                >
+                  <span>{{ req.title }}</span>
+                  <i class="pi pi-external-link text-[10px] text-slate-400"></i>
+                </div>
+                <div class="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{{ req.description }}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">By: {{ req.requester_name }}</div>
               </td>
 
               <!-- Category -->
@@ -178,7 +202,7 @@ import { User } from '../../core/models/user.model';
                 </span>
               </td>
 
-              <!-- Priority (Clickable for quick update) -->
+              <!-- Priority -->
               <td class="py-3 px-4">
                 <button
                   (click)="openPriorityDialog(req)"
@@ -234,9 +258,18 @@ import { User } from '../../core/models/user.model';
                 {{ req.created_at | date : 'MMM d, y, h:mm a' }}
               </td>
 
-              <!-- Action Controls (FR-2.3, FR-2.4) -->
+              <!-- Action Controls -->
               <td class="py-3 px-4 text-center">
                 <div class="flex items-center justify-center space-x-1">
+                  <!-- Feature 3: Quick View Detail Button -->
+                  <button
+                    (click)="openQuickViewDialog(req)"
+                    title="Quick View Details"
+                    class="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition"
+                  >
+                    <i class="pi pi-eye text-sm"></i>
+                  </button>
+
                   <!-- Assign Button -->
                   <button
                     (click)="openAssignDialog(req)"
@@ -281,6 +314,118 @@ import { User } from '../../core/models/user.model';
         </p-table>
       </div>
     </div>
+
+    <!-- FEATURE 3: REQUEST QUICK-VIEW DETAILS MODAL -->
+    <p-dialog
+      [(visible)]="quickViewVisible"
+      [modal]="true"
+      [style]="{ width: '620px' }"
+      header="Request Overview & Details"
+      [draggable]="false"
+      [resizable]="false"
+    >
+      <div *ngIf="activeRequest" class="space-y-4 pt-2 text-slate-800 text-xs">
+        <!-- Title & Badges Header -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="flex items-center justify-between gap-2 mb-1.5">
+            <span class="font-mono text-xs font-bold text-blue-600">Ticket #{{ activeRequest.id }}</span>
+            <div class="flex items-center space-x-1.5">
+              <span
+                [ngClass]="{
+                  'bg-amber-100 text-amber-800 border-amber-200': activeRequest.status === 'Pending',
+                  'bg-sky-100 text-sky-800 border-sky-200': activeRequest.status === 'Assigned',
+                  'bg-indigo-100 text-indigo-800 border-indigo-200': activeRequest.status === 'In Progress',
+                  'bg-emerald-100 text-emerald-800 border-emerald-200': activeRequest.status === 'Resolved',
+                  'bg-slate-100 text-slate-600 border-slate-200': activeRequest.status === 'Closed'
+                }"
+                class="px-2 py-0.5 rounded-full text-[11px] font-semibold border"
+              >
+                {{ activeRequest.status }}
+              </span>
+              <span
+                [ngClass]="{
+                  'bg-rose-100 text-rose-700': activeRequest.priority === 'Critical',
+                  'bg-amber-100 text-amber-700': activeRequest.priority === 'High',
+                  'bg-blue-100 text-blue-700': activeRequest.priority === 'Medium',
+                  'bg-slate-100 text-slate-700': activeRequest.priority === 'Low'
+                }"
+                class="px-2 py-0.5 rounded-full text-[11px] font-semibold"
+              >
+                {{ activeRequest.priority }} Priority
+              </span>
+            </div>
+          </div>
+          <h2 class="text-base font-bold text-slate-900">{{ activeRequest.title }}</h2>
+          <div class="text-[11px] text-slate-500 mt-1">
+            Category: <span class="font-semibold text-slate-700">{{ activeRequest.category_name || 'General' }}</span>
+          </div>
+        </div>
+
+        <!-- Issue Description Box -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Issue Description</label>
+          <div class="p-3.5 bg-slate-50/80 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap leading-relaxed">
+            {{ activeRequest.description }}
+          </div>
+        </div>
+
+        <!-- Requester & Assignee Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Requester Card -->
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Requester</div>
+            <div class="font-semibold text-slate-900 text-xs">{{ activeRequest.requester_name }}</div>
+            <div class="text-[11px] text-slate-500">{{ activeRequest.requester_email }}</div>
+          </div>
+
+          <!-- Assignee Card -->
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-1">
+            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Staff</div>
+            <div *ngIf="activeRequest.assigned_to_name" class="font-semibold text-slate-900 text-xs flex items-center gap-1">
+              <i class="pi pi-check text-emerald-600 text-[10px]"></i>
+              <span>{{ activeRequest.assigned_to_name }}</span>
+            </div>
+            <div *ngIf="!activeRequest.assigned_to_name" class="text-amber-600 italic font-medium">
+              Not Assigned Yet
+            </div>
+            <div class="text-[11px] text-slate-500" *ngIf="activeRequest.assigned_to_email">{{ activeRequest.assigned_to_email }}</div>
+          </div>
+        </div>
+
+        <!-- Timestamps -->
+        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100 font-mono">
+          <div>Created: {{ activeRequest.created_at | date : 'medium' }}</div>
+          <div *ngIf="activeRequest.resolved_at" class="text-emerald-700 font-semibold">
+            Resolved: {{ activeRequest.resolved_at | date : 'medium' }}
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <div class="flex justify-between items-center w-full pt-2">
+          <div class="flex space-x-2">
+            <button
+              (click)="openAssignDialog(activeRequest!); quickViewVisible = false"
+              class="px-3 py-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg transition"
+            >
+              <i class="pi pi-user-plus mr-1"></i> Assign
+            </button>
+            <button
+              (click)="openStatusDialog(activeRequest!); quickViewVisible = false"
+              class="px-3 py-1.5 text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold rounded-lg transition"
+            >
+              <i class="pi pi-sliders-h mr-1"></i> Change Status
+            </button>
+          </div>
+          <button
+            (click)="quickViewVisible = false"
+            class="px-4 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg"
+          >
+            Close
+          </button>
+        </div>
+      </ng-template>
+    </p-dialog>
 
     <!-- 1. ASSIGNMENT DIALOG (FR-2.3) -->
     <p-dialog
@@ -476,6 +621,8 @@ export class AdminRequestsComponent implements OnInit {
 
   // Dialog States
   activeRequest: ServiceRequest | null = null;
+  quickViewVisible = false;
+
   assignDialogVisible = false;
   selectedAssigneeId: number | null = null;
 
@@ -563,6 +710,62 @@ export class AdminRequestsComponent implements OnInit {
     this.selectedCategoryId = null;
     this.currentPage = 1;
     this.loadRequests();
+  }
+
+  // Feature 3: Quick View Dialog
+  openQuickViewDialog(req: ServiceRequest): void {
+    this.activeRequest = req;
+    this.quickViewVisible = true;
+  }
+
+  // Feature 2: Export CSV Implementation
+  exportToCSV(): void {
+    const list = this.requests();
+    if (list.length === 0) return;
+
+    const headers = [
+      'Ticket ID',
+      'Title',
+      'Description',
+      'Category',
+      'Status',
+      'Priority',
+      'Requester Name',
+      'Requester Email',
+      'Assigned Staff',
+      'Created At',
+      'Resolved At',
+    ];
+
+    const rows = list.map((r) => [
+      `#${r.id}`,
+      `"${(r.title || '').replace(/"/g, '""')}"`,
+      `"${(r.description || '').replace(/"/g, '""')}"`,
+      `"${r.category_name || 'General'}"`,
+      r.status,
+      r.priority,
+      `"${r.requester_name || ''}"`,
+      r.requester_email || '',
+      `"${r.assigned_to_name || 'Unassigned'}"`,
+      r.created_at,
+      r.resolved_at || '',
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `ResolveX_Requests_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Export Successful',
+      detail: `Exported ${list.length} service requests to CSV.`,
+    });
   }
 
   // 1. Assignment Workflow
