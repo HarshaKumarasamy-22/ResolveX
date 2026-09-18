@@ -1,0 +1,79 @@
+<div class="activity-timeline-section bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+  <!-- Header with Read-Only Audit Indicator -->
+  <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div class="flex items-center space-x-2">
+      <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <i class="pi pi-history text-xs"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-slate-800">Activity History & Audit Trail</h3>
+      </div>
+    </div>
+    <div class="flex items-center space-x-1.5 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full text-[10px] font-semibold text-slate-600">
+      <i class="pi pi-shield text-[9px] text-emerald-600"></i>
+      <span>Read-Only Audit Log</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex flex-col items-center justify-center py-8">
+    <i class="pi pi-spin pi-spinner text-indigo-600 text-2xl mb-2"></i>
+    <span class="text-xs text-slate-500">Retrieving event timeline...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="text-rose-700 bg-rose-50 border border-rose-200 p-3 rounded-xl text-xs flex items-center justify-between">
+    <span>{{ error }}</span>
+    <button (click)="loadActivity()" class="underline font-semibold ml-2">Retry</button>
+  </div>
+
+  <div *ngIf="!loading && !error">
+    <!-- Empty State -->
+    <div *ngIf="activities.length === 0" class="text-center py-8 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+      <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+        <i class="pi pi-clock text-base"></i>
+      </div>
+      <p class="text-xs font-semibold text-slate-700">No activity events recorded</p>
+      <p class="text-[11px] text-slate-400 mt-0.5">Events like assignments, priority changes, and status updates will appear here.</p>
+    </div>
+
+    <!-- PrimeNG Timeline -->
+    <div *ngIf="activities.length > 0" class="max-h-96 overflow-y-auto pr-1">
+      <p-timeline [value]="activities" styleClass="customized-timeline">
+        <ng-template pTemplate="marker" let-activity>
+          <span [class]="'flex items-center justify-center w-7 h-7 rounded-full border shadow-sm z-10 relative ' + getMarkerBgClass(activity.action_type)">
+            <i [class]="getIconForAction(activity.action_type) + ' text-xs'"></i>
+          </span>
+        </ng-template>
+
+        <ng-template pTemplate="content" let-activity>
+          <div class="p-3 mb-3 bg-slate-50 rounded-xl border border-slate-200/80 shadow-none hover:bg-slate-100/60 transition text-xs space-y-1.5">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-slate-900 text-xs">
+                {{ getActionTitle(activity.action_type) }}
+              </span>
+              <span class="text-[10px] text-slate-400 font-mono">
+                {{ activity.created_at | date : 'MMM d, h:mm a' }}
+              </span>
+            </div>
+
+            <p class="text-slate-600 text-xs leading-relaxed">
+              {{ activity.details }}
+            </p>
+
+            <div class="flex items-center space-x-1.5 text-[10px] text-slate-500 pt-1 border-t border-slate-200/60">
+              <i class="pi pi-user text-slate-400 text-[9px]"></i>
+              <span class="font-medium text-slate-700">{{ activity.actor_name }}</span>
+              <span class="bg-white border border-slate-200 text-slate-600 px-1.5 py-0.2 rounded font-semibold text-[9px]">
+                {{ activity.actor_role }}
+              </span>
+              <span *ngIf="activity.actor_department" class="text-slate-400">
+                • {{ activity.actor_department }}
+              </span>
+            </div>
+          </div>
+        </ng-template>
+      </p-timeline>
+    </div>
+  </div>
+</div>

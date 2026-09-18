@@ -3,6 +3,9 @@ import cors from 'cors';
 import adminRoutes from './modules/admin/admin.routes';
 import requestsRoutes from './modules/requests/requests.routes';
 import authRoutes from './modules/auth/auth.routes';
+import commentsRoutes from './modules/comments/comments.routes';
+import activityRoutes from './modules/activity/activity.routes';
+import analyticsRoutes from './modules/analytics/analytics.routes';
 import { errorHandler } from './middleware/error.middleware';
 
 const app: Application = express();
@@ -27,6 +30,9 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/requests', requestsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/requests/:id/comments', commentsRoutes);
+app.use('/api/requests/:id/activity', activityRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Centralized Error Handling Middleware (must be registered last)
 app.use(errorHandler);

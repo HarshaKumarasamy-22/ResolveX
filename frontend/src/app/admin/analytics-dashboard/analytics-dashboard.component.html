@@ -1,0 +1,186 @@
+<div class="analytics-dashboard space-y-6">
+  <!-- Top Header Banner with AIT Branding -->
+  <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 rounded-2xl p-6 text-white shadow-md border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center space-x-2 text-xs font-semibold text-blue-300 uppercase tracking-widest mb-1">
+        <span>Aurevia Institute of Technology</span>
+        <span>•</span>
+        <span>Colombo, Sri Lanka</span>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+        ResolveX Analytics & Service Intelligence
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-300 mt-1">
+        “Innovate. Connect. Resolve.” — Real-time performance metrics across university faculties, categories, and campus locations.
+      </p>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <button
+        (click)="loadAnalytics()"
+        [disabled]="loading"
+        class="inline-flex items-center space-x-2 bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/20 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition backdrop-blur-sm disabled:opacity-50"
+      >
+        <i class="pi pi-refresh" [ngClass]="{'animate-spin': loading}"></i>
+        <span>{{ loading ? 'Recalculating...' : 'Refresh Metrics' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex flex-col justify-center items-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
+    <i class="pi pi-spin pi-spinner text-blue-600 text-4xl mb-3"></i>
+    <p class="text-sm font-medium text-slate-600">Aggregating university service request metrics from database...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl flex items-center justify-between shadow-sm">
+    <div class="flex items-center space-x-3">
+      <i class="pi pi-exclamation-triangle text-xl"></i>
+      <span class="text-sm font-medium">{{ error }}</span>
+    </div>
+    <button (click)="loadAnalytics()" class="text-xs font-bold underline hover:text-rose-900">Retry</button>
+  </div>
+
+  <!-- Loaded Content -->
+  <div *ngIf="!loading && !error" class="space-y-6 animate-fade-in">
+    <!-- 5 KPI Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <!-- 1. Total Requests -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Requests</span>
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <i class="pi pi-folder text-sm"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-900">{{ summary.total_requests }}</div>
+        <div class="text-[11px] text-slate-400 mt-1">Logged across all faculties</div>
+      </div>
+
+      <!-- 2. Pending Requests -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Pending Triage</span>
+          <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <i class="pi pi-clock text-sm"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-900">{{ summary.pending_requests }}</div>
+        <div class="text-[11px] text-slate-400 mt-1">Awaiting support assignment</div>
+      </div>
+
+      <!-- 3. In Progress Requests -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">In Progress</span>
+          <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="pi pi-sliders-h text-sm"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-900">{{ summary.in_progress_requests }}</div>
+        <div class="text-[11px] text-slate-400 mt-1">Under active investigation</div>
+      </div>
+
+      <!-- 4. Resolved Requests -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Resolved</span>
+          <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="pi pi-check-circle text-sm"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-900">{{ summary.resolved_requests }}</div>
+        <div class="text-[11px] text-slate-400 mt-1">Successfully fulfilled</div>
+      </div>
+
+      <!-- 5. High / Urgent Priority -->
+      <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition col-span-2 sm:col-span-1">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-rose-600">High / Urgent</span>
+          <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+            <i class="pi pi-exclamation-triangle text-sm"></i>
+          </div>
+        </div>
+        <div class="text-3xl font-extrabold text-slate-900">{{ summary.high_critical_requests }}</div>
+        <div class="text-[11px] text-slate-400 mt-1">Requiring immediate attention</div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Chart 1: Requests by Category -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Requests by Category</h2>
+            <p class="text-xs text-slate-500">Distribution across university operational services</p>
+          </div>
+          <span class="text-[11px] bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-md">Categories</span>
+        </div>
+        <div class="h-64 flex items-center justify-center">
+          <p-chart type="doughnut" [data]="categoryChartData" [options]="categoryChartOptions" height="240px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Chart 2: Requests by Status -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Requests by Lifecycle Status</h2>
+            <p class="text-xs text-slate-500">Workflow volume from submission to closure</p>
+          </div>
+          <span class="text-[11px] bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-md">Status</span>
+        </div>
+        <div class="h-64 flex items-center justify-center">
+          <p-chart type="bar" [data]="statusChartData" [options]="statusChartOptions" height="240px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Chart 3: Requests by Academic Division / Department -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Requests by Academic Division</h2>
+            <p class="text-xs text-slate-500">FCSE, FET, FBM, FDDM, and Student Affairs (SASS)</p>
+          </div>
+          <span class="text-[11px] bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-md">Faculties</span>
+        </div>
+        <div class="h-64 flex items-center justify-center">
+          <p-chart type="bar" [data]="departmentChartData" [options]="departmentChartOptions" height="240px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Chart 4: Requests by Campus Location -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Requests by Campus Location</h2>
+            <p class="text-xs text-slate-500">Buildings, laboratories, lecture halls, and facilities</p>
+          </div>
+          <span class="text-[11px] bg-teal-50 text-teal-700 font-semibold px-2 py-0.5 rounded-md">Locations</span>
+        </div>
+        <div class="h-64 flex items-center justify-center">
+          <p-chart type="bar" [data]="locationChartData" [options]="locationChartOptions" height="240px"></p-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campus Locations Quick Breakdown Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Campus Facility Breakdown</h2>
+          <p class="text-xs text-slate-500">Locations generating service demand across Aurevia Institute of Technology</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+        <div *ngFor="let loc of topLocations" class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+          <div class="text-[11px] font-semibold text-slate-700 truncate" [title]="loc.location">{{ loc.location }}</div>
+          <div class="text-lg font-extrabold text-blue-600 mt-1">{{ loc.count }}</div>
+          <div class="text-[10px] text-slate-400">tickets</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

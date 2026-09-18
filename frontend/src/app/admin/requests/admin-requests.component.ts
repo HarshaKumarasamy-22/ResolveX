@@ -12,6 +12,9 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
+import { CommentsComponent } from '../../shared/components/comments/comments.component';
+import { ActivityTimelineComponent } from '../../shared/components/activity-timeline/activity-timeline.component';
+
 import { AdminService } from '../../core/services/admin.service';
 import {
   ServiceRequest,
@@ -36,6 +39,8 @@ import { User, UserRole } from '../../core/models/user.model';
     InputTextModule,
     TagModule,
     ToastModule,
+    CommentsComponent,
+    ActivityTimelineComponent
   ],
   providers: [MessageService],
   template: `
@@ -369,6 +374,15 @@ import { User, UserRole } from '../../core/models/user.model';
                     <i class="pi pi-eye text-sm"></i>
                   </button>
 
+                  <!-- View Comments & Activity Details -->
+                  <button
+                    (click)="viewDetails(req)"
+                    title="View Request Details & Activity"
+                    class="p-1.5 rounded-md hover:bg-purple-50 text-purple-600 transition"
+                  >
+                    <i class="pi pi-comments text-sm"></i>
+                  </button>
+
                   <!-- Assign Button -->
                   <button
                     (click)="openAssignDialog(req)"
@@ -531,7 +545,27 @@ import { User, UserRole } from '../../core/models/user.model';
       </ng-template>
     </p-dialog>
 
-    <!-- 2. ASSIGNMENT DIALOG -->
+    <!-- 0. DETAILS DIALOG (PERSON 3 INTEGRATION) -->
+    <p-dialog
+      [(visible)]="detailsDialogVisible"
+      [modal]="true"
+      [style]="{ width: '800px' }"
+      header="Request Details & Activity"
+      [draggable]="false"
+    >
+      <div *ngIf="activeRequest" class="space-y-4 pt-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <app-comments [requestId]="activeRequest.id"></app-comments>
+          </div>
+          <div>
+            <app-activity-timeline [requestId]="activeRequest.id"></app-activity-timeline>
+          </div>
+        </div>
+      </div>
+    </p-dialog>
+
+    <!-- 1. ASSIGNMENT DIALOG (FR-2.3) -->
     <p-dialog
       [(visible)]="assignDialogVisible"
       [modal]="true"
@@ -756,6 +790,8 @@ export class AdminRequestsComponent implements OnInit {
   priorityDialogVisible = false;
   selectedNewPriority: RequestPriority | null = null;
 
+  detailsDialogVisible = false;
+
   ngOnInit(): void {
     this.loadCategories();
     this.loadStaffUsers();
@@ -911,6 +947,12 @@ export class AdminRequestsComponent implements OnInit {
       summary: 'CSV Export Successful',
       detail: `Exported ${list.length} AIT service requests to CSV.`,
     });
+  }
+
+  // 0. View Details
+  viewDetails(req: ServiceRequest): void {
+    this.activeRequest = req;
+    this.detailsDialogVisible = true;
   }
 
   // 1. Assignment Workflow

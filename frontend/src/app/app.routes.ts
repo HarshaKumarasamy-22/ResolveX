@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AdminLayoutComponent } from './admin/admin-layout/admin-layout.component';
 import { AdminDashboardComponent } from './admin/dashboard/admin-dashboard.component';
+import { AnalyticsDashboardComponent } from './admin/analytics-dashboard/analytics-dashboard.component';
 import { AdminRequestsComponent } from './admin/requests/admin-requests.component';
 import { AdminUsersComponent } from './admin/users/admin-users.component';
 import { AitStructureComponent } from './admin/structure/ait-structure.component';
@@ -20,6 +21,11 @@ export const routes: Routes = [
         path: 'dashboard',
         component: AdminDashboardComponent,
         title: 'ResolveX - AIT Admin Operations Dashboard',
+      },
+      {
+        path: 'analytics',
+        component: AnalyticsDashboardComponent,
+        title: 'ResolveX - Analytics',
       },
       {
         path: 'requests',

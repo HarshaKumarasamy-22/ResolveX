@@ -1,0 +1,5 @@
+/* frontend/src/app/shared/components/activity-timeline/activity-timeline.component.css */
+/* Tailwind used primarily. Customized PrimeNG Timeline styling can go here if needed */
+::ng-deep .customized-timeline .p-timeline-event-marker {
+  display: none !important; /* Hide default marker since we use a custom one */
+}
