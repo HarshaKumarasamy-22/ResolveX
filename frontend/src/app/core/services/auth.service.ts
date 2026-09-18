@@ -13,7 +13,7 @@ export interface AuthState {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly API_URL = 'http://localhost:5000/api/auth';
+  private readonly API_URL = 'http://localhost:5001/api/auth';
   private readonly TOKEN_KEY = 'resolvex_jwt_token';
   private readonly USER_KEY = 'resolvex_user_data';
 

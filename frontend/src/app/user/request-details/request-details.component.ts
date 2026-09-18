@@ -7,10 +7,13 @@ import { MessageService } from 'primeng/api';
 import { RequestService } from '../../core/services/request.service';
 import { ServiceRequest, RequestStatus } from '../../core/models/request.model';
 
+import { CommentsComponent } from '../../shared/components/comments/comments.component';
+import { ActivityTimelineComponent } from '../../shared/components/activity-timeline/activity-timeline.component';
+
 @Component({
   selector: 'app-request-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, ToastModule],
+  imports: [CommonModule, RouterLink, ToastModule, CommentsComponent, ActivityTimelineComponent],
   providers: [MessageService],
   template: `
     <p-toast position="top-right"></p-toast>
@@ -217,26 +220,11 @@ import { ServiceRequest, RequestStatus } from '../../core/models/request.model';
               </div>
             </div>
 
-            <!-- Person 3 Integration Slot: Discussion & Comments -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div class="flex items-center space-x-2">
-                  <i class="pi pi-comments text-blue-600 text-base"></i>
-                  <h3 class="text-sm font-bold text-slate-900">Discussion & Communications</h3>
-                </div>
-                <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded font-mono">
-                  Module Slot (Person 3)
-                </span>
-              </div>
+            <!-- Person 3 Integration: Comments System -->
+            <app-comments [requestId]="requestId"></app-comments>
 
-              <div class="p-6 bg-slate-50/60 rounded-xl border border-dashed border-slate-200 text-center text-slate-500 space-y-2">
-                <i class="pi pi-comment text-2xl text-slate-300"></i>
-                <p class="text-xs font-medium">Comments & Communication Thread</p>
-                <p class="text-[11px] text-slate-400 max-w-sm mx-auto">
-                  Integrated discussion thread between requester and assigned support engineers.
-                </p>
-              </div>
-            </div>
+            <!-- Person 3 Integration: Read-Only Activity Timeline -->
+            <app-activity-timeline [requestId]="requestId"></app-activity-timeline>
           </div>
 
           <!-- Right Column: Requester, Assignee & Timestamps -->

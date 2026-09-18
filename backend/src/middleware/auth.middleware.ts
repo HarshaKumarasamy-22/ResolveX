@@ -34,12 +34,13 @@ export const authenticateJWT = (
   const token = authHeader.split(' ')[1];
 
   // MOCK FOR PERSON 1/2 INTEGRATION
-  if (token === 'demo_token') {
+  if (token === 'demo_token' || token === 'admin_jwt_token') {
     req.user = {
       id: 1,
-      email: 'admin@resolvex.com',
+      email: 'admin@ait.lk',
       role: 'admin',
-      full_name: 'Admin Harsha'
+      full_name: 'Harsha Bandara',
+      department: 'Student Affairs & Support Services',
     };
     return next();
   }

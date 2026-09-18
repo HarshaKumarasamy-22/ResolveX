@@ -28,10 +28,10 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // Module Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/requests', requestsRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/api/requests/:id/comments', commentsRoutes);
 app.use('/api/requests/:id/activity', activityRoutes);
+app.use('/api/requests', requestsRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
 // Centralized Error Handling Middleware (must be registered last)
