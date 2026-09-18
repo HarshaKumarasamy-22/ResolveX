@@ -28,7 +28,7 @@ export class AdminService {
   }
 
   /**
-   * 2. Get All Requests with Filtering, Search & Pagination
+   * 2. Get All Requests with Filtering (Status, Priority, Category, Department, Location, Requester Role, Assignee), Search & Pagination
    */
   getAllRequests(filters: {
     page?: number;
@@ -36,7 +36,11 @@ export class AdminService {
     status?: string;
     priority?: string;
     category_id?: number;
+    department?: string;
+    location?: string;
+    assigned_team?: string;
     assigned_to?: number;
+    requester_role?: string;
     search?: string;
     sortBy?: string;
     sortOrder?: string;
@@ -72,12 +76,13 @@ export class AdminService {
   }
 
   /**
-   * 5. Assign Request to a Staff Member
+   * 5. Assign Request to a Support Team and/or Staff Member
    */
-  assignRequest(id: number, assigned_to: number): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${this.API_URL}/requests/${id}/assign`, {
-      assigned_to,
-    });
+  assignRequest(
+    id: number,
+    assignmentData: { assigned_to?: number; assigned_team?: string }
+  ): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.API_URL}/requests/${id}/assign`, assignmentData);
   }
 
   /**
@@ -95,7 +100,7 @@ export class AdminService {
   /**
    * 7. Update User Status / Role
    */
-  updateUser(id: number, data: { is_active?: boolean; role?: 'user' | 'admin' }): Observable<ApiResponse<User>> {
+  updateUser(id: number, data: { is_active?: boolean; role?: any; department?: string }): Observable<ApiResponse<User>> {
     return this.http.patch<ApiResponse<User>>(`${this.API_URL}/users/${id}/status`, data);
   }
 

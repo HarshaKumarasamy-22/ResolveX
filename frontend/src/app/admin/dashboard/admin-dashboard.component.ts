@@ -14,14 +14,14 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
       <div class="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div class="flex items-center space-x-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/30 text-blue-200 border border-blue-400/30">
-              Live Operations
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/30 text-blue-200 border border-blue-400/30 font-mono">
+              Aurevia Institute of Technology (AIT)
             </span>
-            <span class="text-xs text-slate-300">Connected to Supabase PostgreSQL</span>
+            <span class="text-xs text-slate-300">ResolveX Administration Center</span>
           </div>
-          <h1 class="text-2xl font-extrabold tracking-tight mt-1.5">Admin Operations Dashboard</h1>
-          <p class="text-slate-300 text-sm mt-1">
-            Real-time triage, workload distribution, and ticket lifecycle tracking.
+          <h1 class="text-2xl font-black tracking-tight mt-1.5">AIT Admin Operations Dashboard</h1>
+          <p class="text-slate-300 text-xs sm:text-sm mt-1">
+            University-wide request triage, workload allocation, and department performance metrics.
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -30,11 +30,11 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
             class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition backdrop-blur flex items-center gap-2 border border-white/10"
           >
             <i class="pi pi-refresh" [class.pi-spin]="loading()"></i>
-            <span>Refresh Metrics</span>
+            <span>Refresh</span>
           </button>
           <a
-            routerLink="/admin/requests"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs shadow-md transition flex items-center gap-2"
+            routerLink="/requests"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg text-xs shadow-md transition flex items-center gap-2"
           >
             <i class="pi pi-table"></i>
             <span>Manage All Requests</span>
@@ -42,7 +42,7 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
         </div>
       </div>
 
-      <!-- Metric Cards Grid (FR-2.8) -->
+      <!-- Metric Cards Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Total Requests -->
         <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition relative overflow-hidden group">
@@ -55,7 +55,7 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
           </div>
           <div class="mt-3 text-3xl font-extrabold text-slate-900">{{ summary()?.total_requests ?? 0 }}</div>
           <div class="mt-2 flex items-center text-xs text-slate-500">
-            <span class="font-medium text-slate-700">{{ summary()?.users?.total ?? 0 }} total registered users</span>
+            <span class="font-medium text-slate-700">{{ summary()?.users?.total ?? 0 }} registered university members</span>
           </div>
         </div>
 
@@ -69,44 +69,46 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
             </div>
           </div>
           <div class="mt-3 text-3xl font-extrabold text-amber-600">{{ summary()?.pending_count ?? 0 }}</div>
-          <div class="mt-2 text-xs text-amber-700 font-medium">Awaiting staff delegation</div>
+          <div class="mt-2 text-xs text-amber-700 font-medium">Awaiting team/staff assignment</div>
         </div>
 
         <!-- In Progress -->
         <div class="bg-white rounded-xl border border-indigo-200 p-5 shadow-sm hover:shadow-md transition relative overflow-hidden group bg-gradient-to-br from-white to-indigo-50/40">
           <div class="absolute top-0 left-0 right-0 h-1 bg-indigo-600"></div>
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-indigo-800 uppercase tracking-wider">In Progress</span>
+            <span class="text-xs font-bold text-indigo-800 uppercase tracking-wider">Active Workload</span>
             <div class="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
               <i class="pi pi-spin pi-spinner text-base"></i>
             </div>
           </div>
-          <div class="mt-3 text-3xl font-extrabold text-indigo-600">{{ summary()?.in_progress_count ?? 0 }}</div>
-          <div class="mt-2 text-xs text-indigo-700 font-medium">Actively undergoing resolution</div>
+          <div class="mt-3 text-3xl font-extrabold text-indigo-600">
+            {{ (summary()?.in_progress_count ?? 0) + (summary()?.assigned_count ?? 0) }}
+          </div>
+          <div class="mt-2 text-xs text-indigo-700 font-medium">Under active resolution</div>
         </div>
 
-        <!-- High / Critical Priority -->
+        <!-- High / Urgent Priority -->
         <div class="bg-white rounded-xl border border-rose-200 p-5 shadow-sm hover:shadow-md transition relative overflow-hidden group bg-gradient-to-br from-white to-rose-50/40">
           <div class="absolute top-0 left-0 right-0 h-1 bg-rose-600"></div>
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-rose-800 uppercase tracking-wider">High & Critical</span>
+            <span class="text-xs font-bold text-rose-800 uppercase tracking-wider">Urgent & High</span>
             <div class="w-9 h-9 bg-rose-100 text-rose-700 rounded-lg flex items-center justify-center font-bold">
               <i class="pi pi-exclamation-triangle text-base"></i>
             </div>
           </div>
-          <div class="mt-3 text-3xl font-extrabold text-rose-600">{{ summary()?.high_critical_count ?? 0 }}</div>
-          <div class="mt-2 text-xs text-rose-700 font-medium">Requires immediate response</div>
+          <div class="mt-3 text-3xl font-extrabold text-rose-600">{{ summary()?.urgent_high_count ?? 0 }}</div>
+          <div class="mt-2 text-xs text-rose-700 font-medium">Urgent lecture/lab incidents</div>
         </div>
       </div>
 
-      <!-- Feature 1: Status Distribution Bar & Operational Health Card -->
+      <!-- Lifecycle Distribution & Operational Health -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left 2 cols: Status Distribution Progress Visualization -->
+        <!-- Status Distribution Progress -->
         <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h2 class="text-base font-bold text-slate-900">Request Lifecycle Distribution</h2>
-              <p class="text-xs text-slate-500">Breakdown of all service tickets by current lifecycle state</p>
+              <p class="text-xs text-slate-500">Breakdown of all AIT service tickets by current lifecycle state</p>
             </div>
             <span class="text-xs font-mono font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
               {{ summary()?.total_requests ?? 0 }} Total
@@ -191,11 +193,11 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
           </div>
         </div>
 
-        <!-- Right 1 col: Operational Health & Staff Summary -->
+        <!-- Operational Health & Team Summary -->
         <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
           <div>
-            <h2 class="text-base font-bold text-slate-900">Operational Health</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Key efficiency & resolution rates</p>
+            <h2 class="text-base font-bold text-slate-900">AIT Service Desk Health</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Key resolution & team efficiency metrics</p>
 
             <div class="mt-5 space-y-4">
               <!-- Resolution Rate -->
@@ -209,14 +211,19 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
                 </div>
               </div>
 
-              <!-- Staff Utilization -->
-              <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <div class="text-xs">
-                  <div class="font-semibold text-slate-800">Support Staff Active</div>
-                  <div class="text-slate-500 text-[11px]">{{ summary()?.users?.admins ?? 0 }} staff / admin members</div>
+              <!-- University Support Staff Breakdown -->
+              <div class="pt-3 border-t border-slate-100 space-y-2 text-xs">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-600">Students Registered:</span>
+                  <span class="font-bold text-slate-900">{{ summary()?.users?.students ?? 0 }}</span>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 font-bold flex items-center justify-center text-xs">
-                  <i class="pi pi-users"></i>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-600">Academic Lecturers:</span>
+                  <span class="font-bold text-slate-900">{{ summary()?.users?.lecturers ?? 0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-600">Active Support Engineers:</span>
+                  <span class="font-bold text-indigo-600">{{ summary()?.users?.support_staff ?? 0 }}</span>
                 </div>
               </div>
             </div>
@@ -224,11 +231,64 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
 
           <div class="mt-4 pt-4 border-t border-slate-100">
             <a
-              routerLink="/admin/users"
+              routerLink="/users"
               class="w-full block text-center py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs transition"
             >
-              Manage Support Staff Accounts
+              Manage University Accounts
             </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Departmental & Category Breakdown Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *ngIf="summary()?.by_department">
+        <!-- Faculty / Department Distribution -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-slate-900">Requests by AIT Faculty / Division</h2>
+            <span class="text-[10px] bg-blue-50 text-blue-700 font-mono px-2 py-0.5 rounded font-bold">
+              5 Divisions
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let d of summary()?.by_department" class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-700 truncate max-w-xs">{{ d.department }}</span>
+                <span class="font-bold text-slate-900 font-mono">{{ d.count }} tickets</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2">
+                <div
+                  [style.width.%]="(d.count / (summary()?.total_requests || 1)) * 100"
+                  class="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service Category Distribution -->
+        <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-slate-900">Requests by Service Category</h2>
+            <span class="text-[10px] bg-indigo-50 text-indigo-700 font-mono px-2 py-0.5 rounded font-bold">
+              8 Categories
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            <div *ngFor="let c of summary()?.by_category" class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <span class="font-semibold text-slate-700 truncate max-w-xs">{{ c.category }}</span>
+                <span class="font-bold text-slate-900 font-mono">{{ c.count }} tickets</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2">
+                <div
+                  [style.width.%]="(c.count / (summary()?.total_requests || 1)) * 100"
+                  class="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -240,10 +300,10 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
             <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
             <div>
               <h2 class="text-base font-bold text-slate-900">Urgent Tickets Requiring Triage</h2>
-              <p class="text-xs text-slate-500">Unassigned or high priority service requests</p>
+              <p class="text-xs text-slate-500">Unassigned or high priority campus requests</p>
             </div>
           </div>
-          <a routerLink="/admin/requests" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+          <a routerLink="/requests" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
             <span>Open All in Management Table</span>
             <i class="pi pi-arrow-right text-[10px]"></i>
           </a>
@@ -265,11 +325,13 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
           <div *ngFor="let req of urgentRequests()" class="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-50 transition">
             <div class="space-y-1">
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-mono font-bold text-slate-500">#{{ req.id }}</span>
+                <span class="text-xs font-mono font-bold text-blue-600">
+                  {{ req.request_code || '#' + req.id }}
+                </span>
                 <span class="font-semibold text-slate-900 text-sm">{{ req.title }}</span>
                 <span
                   [ngClass]="{
-                    'bg-rose-100 text-rose-700 border-rose-200': req.priority === 'Critical',
+                    'bg-rose-100 text-rose-700 border-rose-200': req.priority === 'Urgent' || req.priority === 'Critical',
                     'bg-amber-100 text-amber-700 border-amber-200': req.priority === 'High',
                     'bg-blue-100 text-blue-700 border-blue-200': req.priority === 'Medium',
                     'bg-slate-100 text-slate-700 border-slate-200': req.priority === 'Low'
@@ -283,15 +345,19 @@ import { DashboardSummary, ServiceRequest } from '../../core/models/request.mode
                 </span>
               </div>
               <p class="text-xs text-slate-600 line-clamp-1">{{ req.description }}</p>
-              <div class="text-[11px] text-slate-400">
-                Requester: <span class="font-medium text-slate-600">{{ req.requester_name }}</span> • Status: <span class="font-semibold text-slate-700">{{ req.status }}</span>
+              <div class="text-[11px] text-slate-400 flex items-center space-x-2">
+                <span>Requester: <strong class="text-slate-600">{{ req.requester_name }}</strong></span>
+                <span>•</span>
+                <span>Location: <strong class="text-slate-600">{{ req.location }}</strong></span>
+                <span>•</span>
+                <span>Status: <strong class="text-slate-700">{{ req.status }}</strong></span>
               </div>
             </div>
 
             <div class="flex items-center space-x-2">
               <a
-                [routerLink]="['/admin/requests']"
-                [queryParams]="{ search: req.id }"
+                [routerLink]="['/requests']"
+                [queryParams]="{ search: req.request_code || req.id }"
                 class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-sm transition"
               >
                 Triage & Assign

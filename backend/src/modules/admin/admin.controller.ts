@@ -45,6 +45,23 @@ export class AdminController {
   }
 
   /**
+   * GET /api/admin/requests/export/csv
+   */
+  static async exportRequestsCsv(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const filters = adminRequestQuerySchema.parse(req.query);
+      const csvData = await AdminService.exportRequestsCsv(filters);
+
+      const filename = `AIT_ResolveX_Requests_${new Date().toISOString().slice(0, 10)}.csv`;
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.status(200).send(csvData);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
    * PATCH /api/admin/requests/:id/status
    */
   static async updateStatus(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
@@ -91,8 +108,8 @@ export class AdminController {
     try {
       const idParam = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const requestId = parseInt(idParam, 10);
-      const { assigned_to } = assignRequestSchema.parse(req.body);
-      const result = await AdminService.assignRequest(requestId, assigned_to, req.user!);
+      const body = assignRequestSchema.parse(req.body);
+      const result = await AdminService.assignRequest(requestId, body, req.user!);
 
       res.status(200).json({
         success: true,

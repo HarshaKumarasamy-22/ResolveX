@@ -4,15 +4,12 @@ import { AdminDashboardComponent } from './admin/dashboard/admin-dashboard.compo
 import { AnalyticsDashboardComponent } from './admin/analytics-dashboard/analytics-dashboard.component';
 import { AdminRequestsComponent } from './admin/requests/admin-requests.component';
 import { AdminUsersComponent } from './admin/users/admin-users.component';
+import { AitStructureComponent } from './admin/structure/ait-structure.component';
 
 export const routes: Routes = [
+  // 1. Primary Admin Portal Routes (Person 1 - Harsha Module)
   {
     path: '',
-    redirectTo: 'admin/dashboard',
-    pathMatch: 'full',
-  },
-  {
-    path: 'admin',
     component: AdminLayoutComponent,
     children: [
       {
@@ -23,7 +20,7 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: AdminDashboardComponent,
-        title: 'ResolveX - Admin Dashboard',
+        title: 'ResolveX - AIT Admin Operations Dashboard',
       },
       {
         path: 'analytics',
@@ -33,17 +30,24 @@ export const routes: Routes = [
       {
         path: 'requests',
         component: AdminRequestsComponent,
-        title: 'ResolveX - Manage Requests',
+        title: 'ResolveX - All Service Requests Management',
       },
       {
         path: 'users',
         component: AdminUsersComponent,
-        title: 'ResolveX - User Management',
+        title: 'ResolveX - AIT User & Staff Management',
+      },
+      {
+        path: 'structure',
+        component: AitStructureComponent,
+        title: 'ResolveX - AIT University Hierarchy & Structure',
       },
     ],
   },
+
+  // 2. Fallback
   {
     path: '**',
-    redirectTo: 'admin/dashboard',
+    redirectTo: 'dashboard',
   },
 ];
