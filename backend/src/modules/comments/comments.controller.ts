@@ -34,22 +34,24 @@ export const addComment = async (
     const insertResult = await query(
       `INSERT INTO comments (request_id, user_id, message) 
        VALUES ($1, $2, $3) RETURNING *`,
-      [id, userId, message]
+      [id, userId, message.trim()]
     );
 
     const newComment = insertResult.rows[0];
 
     // Log Activity
+    const authorName = req.user?.full_name || 'User';
     await logActivity(
       Number(id),
       userId,
       'COMMENTED',
-      'Added a comment to the request'
+      `Comment added by ${authorName}`
     );
 
     // Fetch comment with user details for response
     const commentWithUser = await query(
-      `SELECT c.*, u.full_name as author_name, u.role as author_role 
+      `SELECT c.id, c.request_id, c.message, c.created_at, 
+              u.id as user_id, u.full_name as author_name, u.role as author_role, u.department as author_department
        FROM comments c 
        JOIN users u ON c.user_id = u.id 
        WHERE c.id = $1`,
@@ -82,8 +84,8 @@ export const getComments = async (
     }
 
     const commentsResult = await query(
-      `SELECT c.id, c.message, c.created_at, 
-              u.id as user_id, u.full_name as author_name, u.role as author_role
+      `SELECT c.id, c.request_id, c.message, c.created_at, 
+              u.id as user_id, u.full_name as author_name, u.role as author_role, u.department as author_department
        FROM comments c
        JOIN users u ON c.user_id = u.id
        WHERE c.request_id = $1

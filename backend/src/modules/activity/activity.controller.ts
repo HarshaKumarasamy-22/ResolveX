@@ -18,12 +18,12 @@ export const getActivityLogs = async (
     }
 
     const logsResult = await query(
-      `SELECT a.id, a.action_type, a.details, a.created_at,
-              u.full_name as actor_name, u.role as actor_role
+      `SELECT a.id, a.request_id, a.action_type, a.details, a.created_at,
+              u.id as user_id, u.full_name as actor_name, u.role as actor_role, u.department as actor_department
        FROM activity_logs a
        JOIN users u ON a.user_id = u.id
        WHERE a.request_id = $1
-       ORDER BY a.created_at DESC`,
+       ORDER BY a.created_at ASC`,
       [id]
     );
 
