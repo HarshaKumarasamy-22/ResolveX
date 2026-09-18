@@ -266,20 +266,22 @@ import { User } from '../../core/models/user.model';
               <!-- Action Controls -->
               <td class="py-3 px-4 text-center">
                 <div class="flex items-center justify-center space-x-1">
-<<<<<<< Updated upstream
-                  <!-- Feature 3: Quick View Detail Button -->
+                  <!-- Quick View Detail Button -->
                   <button
                     (click)="openQuickViewDialog(req)"
                     title="Quick View Details"
-=======
-                  <!-- View Details -->
-                  <button
-                    (click)="viewDetails(req)"
-                    title="View Request Details"
->>>>>>> Stashed changes
                     class="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition"
                   >
                     <i class="pi pi-eye text-sm"></i>
+                  </button>
+
+                  <!-- View Comments & Activity Details -->
+                  <button
+                    (click)="viewDetails(req)"
+                    title="View Request Details & Activity"
+                    class="p-1.5 rounded-md hover:bg-purple-50 text-purple-600 transition"
+                  >
+                    <i class="pi pi-comments text-sm"></i>
                   </button>
 
                   <!-- Assign Button -->
@@ -327,7 +329,6 @@ import { User } from '../../core/models/user.model';
       </div>
     </div>
 
-<<<<<<< Updated upstream
     <!-- FEATURE 3: REQUEST QUICK-VIEW DETAILS MODAL -->
     <p-dialog
       [(visible)]="quickViewVisible"
@@ -438,7 +439,8 @@ import { User } from '../../core/models/user.model';
           </button>
         </div>
       </ng-template>
-=======
+    </p-dialog>
+
     <!-- 0. DETAILS DIALOG (PERSON 3 INTEGRATION) -->
     <p-dialog
       [(visible)]="detailsDialogVisible"
@@ -456,8 +458,6 @@ import { User } from '../../core/models/user.model';
             <app-activity-timeline [requestId]="activeRequest.id"></app-activity-timeline>
           </div>
         </div>
-      </div>
->>>>>>> Stashed changes
     </p-dialog>
 
     <!-- 1. ASSIGNMENT DIALOG (FR-2.3) -->
@@ -747,7 +747,6 @@ export class AdminRequestsComponent implements OnInit {
     this.loadRequests();
   }
 
-<<<<<<< Updated upstream
   // Feature 3: Quick View Dialog
   openQuickViewDialog(req: ServiceRequest): void {
     this.activeRequest = req;
@@ -802,12 +801,10 @@ export class AdminRequestsComponent implements OnInit {
       summary: 'Export Successful',
       detail: `Exported ${list.length} service requests to CSV.`,
     });
-=======
   // 0. View Details
   viewDetails(req: ServiceRequest): void {
     this.activeRequest = req;
     this.detailsDialogVisible = true;
->>>>>>> Stashed changes
   }
 
   // 1. Assignment Workflow
