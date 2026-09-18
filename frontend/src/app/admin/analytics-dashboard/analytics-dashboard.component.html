@@ -1,0 +1,94 @@
+<div class="analytics-dashboard p-6">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Analytics Dashboard</h2>
+      <p class="text-sm text-gray-500 mt-1">Overview of service requests and system activity.</p>
+    </div>
+    <button (click)="loadAnalytics()" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+      <i class="pi pi-refresh" [ngClass]="{'animate-spin': loading}"></i> Refresh Data
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="flex justify-center items-center h-64">
+    <i class="pi pi-spin pi-spinner text-blue-500 text-5xl"></i>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="bg-red-50 text-red-600 p-4 rounded-lg shadow-sm border border-red-100 flex items-center gap-3">
+    <i class="pi pi-exclamation-triangle text-xl"></i>
+    <span class="font-medium">{{ error }}</span>
+  </div>
+
+  <div *ngIf="!loading && !error" class="animate-fade-in">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-center items-center text-center transition-transform hover:-translate-y-1 hover:shadow-md">
+        <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+          <i class="pi pi-list text-blue-500 text-xl"></i>
+        </div>
+        <h4 class="text-gray-500 text-sm font-medium">Total Requests</h4>
+        <span class="text-3xl font-bold text-gray-900 mt-1">{{ summary.total_requests }}</span>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-center items-center text-center transition-transform hover:-translate-y-1 hover:shadow-md">
+        <div class="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mb-3">
+          <i class="pi pi-clock text-orange-500 text-xl"></i>
+        </div>
+        <h4 class="text-gray-500 text-sm font-medium">Pending</h4>
+        <span class="text-3xl font-bold text-gray-900 mt-1">{{ summary.pending_requests }}</span>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-center items-center text-center transition-transform hover:-translate-y-1 hover:shadow-md">
+        <div class="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
+          <i class="pi pi-cog text-purple-500 text-xl"></i>
+        </div>
+        <h4 class="text-gray-500 text-sm font-medium">In Progress</h4>
+        <span class="text-3xl font-bold text-gray-900 mt-1">{{ summary.in_progress_requests }}</span>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-center items-center text-center transition-transform hover:-translate-y-1 hover:shadow-md">
+        <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mb-3">
+          <i class="pi pi-check-circle text-green-500 text-xl"></i>
+        </div>
+        <h4 class="text-gray-500 text-sm font-medium">Resolved</h4>
+        <span class="text-3xl font-bold text-gray-900 mt-1">{{ summary.resolved_requests }}</span>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col justify-center items-center text-center transition-transform hover:-translate-y-1 hover:shadow-md">
+        <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-3">
+          <i class="pi pi-exclamation-triangle text-red-500 text-xl"></i>
+        </div>
+        <h4 class="text-gray-500 text-sm font-medium">High / Critical</h4>
+        <span class="text-3xl font-bold text-gray-900 mt-1">{{ summary.high_critical_requests }}</span>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Status Chart -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-100 pb-2">Requests by Status</h3>
+        <div class="h-64 flex justify-center">
+          <p-chart type="bar" [data]="statusChartData" [options]="statusChartOptions" height="250px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Priority Chart -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-100 pb-2">Requests by Priority</h3>
+        <div class="h-64 flex justify-center">
+          <p-chart type="pie" [data]="priorityChartData" [options]="priorityChartOptions" height="250px"></p-chart>
+        </div>
+      </div>
+
+      <!-- Category Chart (Full Width) -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 border-b border-gray-100 pb-2">Requests by Category</h3>
+        <div class="h-80 flex justify-center">
+          <p-chart type="doughnut" [data]="categoryChartData" [options]="categoryChartOptions" height="300px"></p-chart>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

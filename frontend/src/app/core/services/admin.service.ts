@@ -16,7 +16,7 @@ import { User } from '../models/user.model';
   providedIn: 'root',
 })
 export class AdminService {
-  private readonly API_URL = 'http://localhost:5000/api/admin';
+  private readonly API_URL = 'http://localhost:5001/api/admin';
 
   constructor(private http: HttpClient) {}
 

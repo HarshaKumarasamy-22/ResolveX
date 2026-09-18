@@ -12,6 +12,9 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
+import { CommentsComponent } from '../../shared/components/comments/comments.component';
+import { ActivityTimelineComponent } from '../../shared/components/activity-timeline/activity-timeline.component';
+
 import { AdminService } from '../../core/services/admin.service';
 import {
   ServiceRequest,
@@ -33,6 +36,8 @@ import { User } from '../../core/models/user.model';
     InputTextModule,
     TagModule,
     ToastModule,
+    CommentsComponent,
+    ActivityTimelineComponent
   ],
   providers: [MessageService],
   template: `
@@ -261,10 +266,17 @@ import { User } from '../../core/models/user.model';
               <!-- Action Controls -->
               <td class="py-3 px-4 text-center">
                 <div class="flex items-center justify-center space-x-1">
+<<<<<<< Updated upstream
                   <!-- Feature 3: Quick View Detail Button -->
                   <button
                     (click)="openQuickViewDialog(req)"
                     title="Quick View Details"
+=======
+                  <!-- View Details -->
+                  <button
+                    (click)="viewDetails(req)"
+                    title="View Request Details"
+>>>>>>> Stashed changes
                     class="p-1.5 rounded-md hover:bg-slate-100 text-slate-600 transition"
                   >
                     <i class="pi pi-eye text-sm"></i>
@@ -315,6 +327,7 @@ import { User } from '../../core/models/user.model';
       </div>
     </div>
 
+<<<<<<< Updated upstream
     <!-- FEATURE 3: REQUEST QUICK-VIEW DETAILS MODAL -->
     <p-dialog
       [(visible)]="quickViewVisible"
@@ -425,6 +438,26 @@ import { User } from '../../core/models/user.model';
           </button>
         </div>
       </ng-template>
+=======
+    <!-- 0. DETAILS DIALOG (PERSON 3 INTEGRATION) -->
+    <p-dialog
+      [(visible)]="detailsDialogVisible"
+      [modal]="true"
+      [style]="{ width: '800px' }"
+      header="Request Details & Activity"
+      [draggable]="false"
+    >
+      <div *ngIf="activeRequest" class="space-y-4 pt-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <app-comments [requestId]="activeRequest.id"></app-comments>
+          </div>
+          <div>
+            <app-activity-timeline [requestId]="activeRequest.id"></app-activity-timeline>
+          </div>
+        </div>
+      </div>
+>>>>>>> Stashed changes
     </p-dialog>
 
     <!-- 1. ASSIGNMENT DIALOG (FR-2.3) -->
@@ -633,6 +666,8 @@ export class AdminRequestsComponent implements OnInit {
   priorityDialogVisible = false;
   selectedNewPriority: RequestPriority | null = null;
 
+  detailsDialogVisible = false;
+
   ngOnInit(): void {
     this.loadCategories();
     this.loadStaffUsers();
@@ -712,6 +747,7 @@ export class AdminRequestsComponent implements OnInit {
     this.loadRequests();
   }
 
+<<<<<<< Updated upstream
   // Feature 3: Quick View Dialog
   openQuickViewDialog(req: ServiceRequest): void {
     this.activeRequest = req;
@@ -766,6 +802,12 @@ export class AdminRequestsComponent implements OnInit {
       summary: 'Export Successful',
       detail: `Exported ${list.length} service requests to CSV.`,
     });
+=======
+  // 0. View Details
+  viewDetails(req: ServiceRequest): void {
+    this.activeRequest = req;
+    this.detailsDialogVisible = true;
+>>>>>>> Stashed changes
   }
 
   // 1. Assignment Workflow

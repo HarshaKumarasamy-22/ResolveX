@@ -47,6 +47,14 @@ import { AuthService } from '../../core/services/auth.service';
                 <span>All Requests</span>
               </a>
               <a
+                routerLink="/admin/analytics"
+                routerLinkActive="bg-slate-800 text-blue-400 font-semibold"
+                class="px-3.5 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition flex items-center space-x-1.5"
+              >
+                <i class="pi pi-chart-bar text-sm"></i>
+                <span>Analytics</span>
+              </a>
+              <a
                 routerLink="/admin/users"
                 routerLinkActive="bg-slate-800 text-blue-400 font-semibold"
                 class="px-3.5 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition flex items-center space-x-1.5"

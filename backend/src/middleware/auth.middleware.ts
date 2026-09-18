@@ -30,6 +30,17 @@ export const authenticateJWT = (
 
   const token = authHeader.split(' ')[1];
 
+  // MOCK FOR PERSON 1/2 INTEGRATION
+  if (token === 'demo_token') {
+    req.user = {
+      id: 1,
+      email: 'admin@resolvex.com',
+      role: 'admin',
+      full_name: 'Admin Harsha'
+    };
+    return next();
+  }
+
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as AuthUser;
     req.user = decoded;
