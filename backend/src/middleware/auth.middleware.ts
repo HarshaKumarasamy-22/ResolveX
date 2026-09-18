@@ -2,11 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 
+export type UserRole = 'student' | 'lecturer' | 'staff' | 'support_staff' | 'admin' | 'user';
+
 export interface AuthUser {
   id: number;
   email: string;
-  role: 'user' | 'admin';
+  role: UserRole | string;
   full_name: string;
+  department?: string;
 }
 
 export interface AuthenticatedRequest extends Request {

@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { AuthenticatedRequest } from './auth.middleware';
+import { AuthenticatedRequest, UserRole } from './auth.middleware';
 
-export const requireRole = (allowedRole: 'user' | 'admin') => {
+export const requireRole = (...allowedRoles: (UserRole | string)[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
@@ -11,10 +11,10 @@ export const requireRole = (allowedRole: 'user' | 'admin') => {
       return;
     }
 
-    if (req.user.role !== allowedRole) {
+    if (!allowedRoles.includes(req.user.role)) {
       res.status(403).json({
         success: false,
-        message: `Forbidden. Requires '${allowedRole}' privileges.`,
+        message: `Forbidden. Requires one of the following roles: [${allowedRoles.join(', ')}].`,
       });
       return;
     }

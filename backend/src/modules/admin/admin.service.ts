@@ -25,7 +25,7 @@ export class AdminService {
         COUNT(*) FILTER (WHERE status = 'In Progress') AS in_progress_count,
         COUNT(*) FILTER (WHERE status = 'Resolved') AS resolved_count,
         COUNT(*) FILTER (WHERE status = 'Closed') AS closed_count,
-        COUNT(*) FILTER (WHERE priority = 'High' OR priority = 'Critical') AS high_critical_count
+        COUNT(*) FILTER (WHERE priority = 'Urgent' OR priority = 'High') AS urgent_high_count
       FROM requests
     `;
 
@@ -33,13 +33,43 @@ export class AdminService {
       SELECT 
         COUNT(*) AS total_users,
         COUNT(*) FILTER (WHERE role = 'admin') AS admin_count,
+        COUNT(*) FILTER (WHERE role = 'support_staff') AS support_staff_count,
+        COUNT(*) FILTER (WHERE role = 'student') AS student_count,
+        COUNT(*) FILTER (WHERE role = 'lecturer') AS lecturer_count,
+        COUNT(*) FILTER (WHERE role = 'staff') AS staff_count,
         COUNT(*) FILTER (WHERE is_active = TRUE) AS active_users
       FROM users
     `;
 
-    const [countsResult, userCountResult] = await Promise.all([
+    const deptDistributionQuery = `
+      SELECT department, COUNT(*) AS request_count
+      FROM requests
+      GROUP BY department
+      ORDER BY request_count DESC
+    `;
+
+    const catDistributionQuery = `
+      SELECT c.name AS category_name, COUNT(r.id) AS request_count
+      FROM categories c
+      LEFT JOIN requests r ON r.category_id = c.id
+      GROUP BY c.id, c.name
+      ORDER BY request_count DESC
+    `;
+
+    const roleDistributionQuery = `
+      SELECT u.role, COUNT(r.id) AS request_count
+      FROM requests r
+      JOIN users u ON u.id = r.user_id
+      GROUP BY u.role
+      ORDER BY request_count DESC
+    `;
+
+    const [countsResult, userCountResult, deptResult, catResult, roleResult] = await Promise.all([
       query(countsQuery),
       query(userCountQuery),
+      query(deptDistributionQuery),
+      query(catDistributionQuery),
+      query(roleDistributionQuery),
     ]);
 
     const counts = countsResult.rows[0];
@@ -52,17 +82,33 @@ export class AdminService {
       in_progress_count: parseInt(counts.in_progress_count || '0', 10),
       resolved_count: parseInt(counts.resolved_count || '0', 10),
       closed_count: parseInt(counts.closed_count || '0', 10),
-      high_critical_count: parseInt(counts.high_critical_count || '0', 10),
+      urgent_high_count: parseInt(counts.urgent_high_count || '0', 10),
       users: {
         total: parseInt(userCounts.total_users || '0', 10),
         admins: parseInt(userCounts.admin_count || '0', 10),
+        support_staff: parseInt(userCounts.support_staff_count || '0', 10),
+        students: parseInt(userCounts.student_count || '0', 10),
+        lecturers: parseInt(userCounts.lecturer_count || '0', 10),
+        staff: parseInt(userCounts.staff_count || '0', 10),
         active: parseInt(userCounts.active_users || '0', 10),
       },
+      by_department: deptResult.rows.map(r => ({
+        department: r.department,
+        count: parseInt(r.request_count, 10),
+      })),
+      by_category: catResult.rows.map(r => ({
+        category: r.category_name,
+        count: parseInt(r.request_count, 10),
+      })),
+      by_role: roleResult.rows.map(r => ({
+        role: r.role,
+        count: parseInt(r.request_count, 10),
+      })),
     };
   }
 
   /**
-   * 2. List all requests with search, filtering and pagination
+   * 2. List all requests with search, filtering (including requester_role) and pagination
    */
   static async getAllRequests(filters: {
     page: number;
@@ -70,12 +116,16 @@ export class AdminService {
     status?: string;
     priority?: string;
     category_id?: number;
+    department?: string;
+    location?: string;
+    assigned_team?: string;
     assigned_to?: number;
+    requester_role?: string;
     search?: string;
     sortBy: string;
     sortOrder: string;
   }) {
-    const { page, limit, status, priority, category_id, assigned_to, search, sortBy, sortOrder } = filters;
+    const { page, limit, status, priority, category_id, department, location, assigned_team, assigned_to, requester_role, search, sortBy, sortOrder } = filters;
     const offset = (page - 1) * limit;
 
     const conditions: string[] = [];
@@ -97,26 +147,54 @@ export class AdminService {
       params.push(category_id);
     }
 
+    if (department) {
+      conditions.push(`r.department = $${paramIndex++}`);
+      params.push(department);
+    }
+
+    if (location) {
+      conditions.push(`r.location = $${paramIndex++}`);
+      params.push(location);
+    }
+
+    if (assigned_team) {
+      conditions.push(`r.assigned_team = $${paramIndex++}`);
+      params.push(assigned_team);
+    }
+
     if (assigned_to) {
       conditions.push(`latest_assign.assigned_to = $${paramIndex++}`);
       params.push(assigned_to);
     }
 
+    if (requester_role) {
+      conditions.push(`u.role = $${paramIndex++}`);
+      params.push(requester_role);
+    }
+
     if (search && search.trim() !== '') {
-      conditions.push(`(r.title ILIKE $${paramIndex} OR r.description ILIKE $${paramIndex})`);
+      conditions.push(`(
+        r.title ILIKE $${paramIndex} OR 
+        r.description ILIKE $${paramIndex} OR 
+        r.request_code ILIKE $${paramIndex} OR 
+        u.full_name ILIKE $${paramIndex} OR 
+        u.email ILIKE $${paramIndex} OR 
+        r.room_number ILIKE $${paramIndex}
+      )`);
       params.push(`%${search.trim()}%`);
       paramIndex++;
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Order By Sanitization
     const allowedSortColumns: Record<string, string> = {
       created_at: 'r.created_at',
       updated_at: 'r.updated_at',
       priority: 'r.priority',
       status: 'r.status',
       title: 'r.title',
+      request_code: 'r.request_code',
+      department: 'r.department',
     };
     const sortCol = allowedSortColumns[sortBy] || 'r.created_at';
     const sortDir = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
@@ -125,6 +203,7 @@ export class AdminService {
     const countSql = `
       SELECT COUNT(*) AS total
       FROM requests r
+      JOIN users u ON u.id = r.user_id
       LEFT JOIN (
         SELECT DISTINCT ON (request_id) request_id, assigned_to
         FROM assignments
@@ -139,15 +218,22 @@ export class AdminService {
     const dataSql = `
       SELECT 
         r.id,
+        r.request_code,
         r.title,
         r.description,
         r.category_id,
         c.name AS category_name,
+        c.icon AS category_icon,
         r.user_id AS requester_id,
         u.full_name AS requester_name,
         u.email AS requester_email,
+        u.role AS requester_role,
+        r.department,
+        r.location,
+        r.room_number,
         r.status,
         r.priority,
+        r.assigned_team,
         r.created_at,
         r.updated_at,
         r.resolved_at,
@@ -158,7 +244,7 @@ export class AdminService {
       JOIN categories c ON c.id = r.category_id
       JOIN users u ON u.id = r.user_id
       LEFT JOIN (
-        SELECT DISTINCT ON (request_id) request_id, assigned_to, assigned_at
+        SELECT DISTINCT ON (request_id) request_id, assigned_to, assigned_team, assigned_at
         FROM assignments
         ORDER BY request_id, assigned_at DESC
       ) latest_assign ON latest_assign.request_id = r.id
@@ -188,7 +274,7 @@ export class AdminService {
   static async updateRequestStatus(requestId: number, newStatus: string, actor: AuthUser, note?: string) {
     const existing = await query('SELECT * FROM requests WHERE id = $1', [requestId]);
     if (existing.rows.length === 0) {
-      throw new AppError('Request not found', 404);
+      throw new AppError('Service request not found', 404);
     }
 
     const currentStatus = existing.rows[0].status;
@@ -222,7 +308,7 @@ export class AdminService {
 
     // Log Activity
     const actionType = newStatus === 'Resolved' ? 'RESOLVED' : newStatus === 'Closed' ? 'CLOSED' : 'STATUS_CHANGED';
-    const details = `Status changed from '${currentStatus}' to '${newStatus}'${note ? ` - Note: ${note}` : ''}`;
+    const details = `Status changed from '${currentStatus}' to '${newStatus}' by ${actor.full_name}${note ? ` - Note: ${note}` : ''}`;
     await logActivity(requestId, actor.id, actionType, details);
 
     return updated;
@@ -234,7 +320,7 @@ export class AdminService {
   static async updateRequestPriority(requestId: number, newPriority: string, actor: AuthUser) {
     const existing = await query('SELECT * FROM requests WHERE id = $1', [requestId]);
     if (existing.rows.length === 0) {
-      throw new AppError('Request not found', 404);
+      throw new AppError('Service request not found', 404);
     }
 
     const oldPriority = existing.rows[0].priority;
@@ -255,69 +341,147 @@ export class AdminService {
       requestId,
       actor.id,
       'PRIORITY_CHANGED',
-      `Priority changed from '${oldPriority}' to '${newPriority}'`
+      `Priority updated from '${oldPriority}' to '${newPriority}' by ${actor.full_name}`
     );
 
     return updated;
   }
 
   /**
-   * 5. Assign Request to Staff Member
+   * 5. Assign Request to Support Team and/or Staff Member
    */
-  static async assignRequest(requestId: number, assignedToId: number, actor: AuthUser) {
-    // Check request existence
+  static async assignRequest(
+    requestId: number,
+    assignmentData: { assigned_to?: number; assigned_team?: string },
+    actor: AuthUser
+  ) {
     const requestRes = await query('SELECT * FROM requests WHERE id = $1', [requestId]);
     if (requestRes.rows.length === 0) {
-      throw new AppError('Request not found', 404);
+      throw new AppError('Service request not found', 404);
     }
     const currentRequest = requestRes.rows[0];
 
-    // Check assignee existence
-    const userRes = await query('SELECT id, full_name, role, is_active FROM users WHERE id = $1', [assignedToId]);
-    if (userRes.rows.length === 0) {
-      throw new AppError('Assignee user not found', 404);
-    }
-    const staff = userRes.rows[0];
+    let staffName = 'Designated Support Team';
+    let assignedToId = assignmentData.assigned_to || null;
 
-    if (!staff.is_active) {
-      throw new AppError('Cannot assign request to a deactivated user', 400);
+    if (assignedToId) {
+      const userRes = await query('SELECT id, full_name, role, is_active FROM users WHERE id = $1', [assignedToId]);
+      if (userRes.rows.length === 0) {
+        throw new AppError('Assignee user not found', 404);
+      }
+      const staff = userRes.rows[0];
+      if (!staff.is_active) {
+        throw new AppError('Cannot assign request to a deactivated user', 400);
+      }
+      staffName = staff.full_name;
     }
 
-    // Insert into assignments table
-    const assignSql = `
-      INSERT INTO assignments (request_id, assigned_to, assigned_by)
-      VALUES ($1, $2, $3)
+    // Insert into assignments audit table if assigned_to is present
+    let assignmentRecord = null;
+    if (assignedToId) {
+      const assignSql = `
+        INSERT INTO assignments (request_id, assigned_to, assigned_by, assigned_team)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+      const assignRes = await query(assignSql, [
+        requestId,
+        assignedToId,
+        actor.id,
+        assignmentData.assigned_team || currentRequest.assigned_team,
+      ]);
+      assignmentRecord = assignRes.rows[0];
+    }
+
+    // Update request record with assigned_team and status
+    const newStatus = currentRequest.status === 'Pending' ? 'Assigned' : currentRequest.status;
+    const updateSql = `
+      UPDATE requests 
+      SET 
+        assigned_team = COALESCE($1, assigned_team),
+        status = $2,
+        updated_at = NOW()
+      WHERE id = $3
       RETURNING *
     `;
-    const assignRes = await query(assignSql, [requestId, assignedToId, actor.id]);
-
-    // Update status to 'Assigned' if it is currently 'Pending'
-    let updatedStatus = currentRequest.status;
-    if (currentRequest.status === 'Pending') {
-      await query(`UPDATE requests SET status = 'Assigned', updated_at = NOW() WHERE id = $1`, [requestId]);
-      updatedStatus = 'Assigned';
-    }
+    const updateRes = await query(updateSql, [
+      assignmentData.assigned_team || null,
+      newStatus,
+      requestId,
+    ]);
 
     // Log Activity
+    const teamText = assignmentData.assigned_team ? ` [Team: ${assignmentData.assigned_team}]` : '';
     await logActivity(
       requestId,
       actor.id,
       'ASSIGNED',
-      `Assigned to ${staff.full_name} (ID: ${staff.id}) by Admin ${actor.full_name}`
+      `Assigned to ${staffName}${teamText} by Admin ${actor.full_name}`
     );
 
     return {
-      assignment: assignRes.rows[0],
-      assigned_to: {
-        id: staff.id,
-        full_name: staff.full_name,
-      },
-      status: updatedStatus,
+      assignment: assignmentRecord,
+      request: updateRes.rows[0],
+      status: newStatus,
+      assigned_to_name: staffName,
+      assigned_team: updateRes.rows[0].assigned_team,
     };
   }
 
   /**
-   * 6. List Users for User Management
+   * 6. Export all requests to CSV formatted string
+   */
+  static async exportRequestsCsv(filters: any) {
+    const result = await this.getAllRequests({
+      ...filters,
+      page: 1,
+      limit: 10000,
+    });
+
+    const requests = result.data;
+    const headers = [
+      'Ticket Code',
+      'Title',
+      'Category',
+      'Faculty / Department',
+      'Campus Location',
+      'Room / Lab No',
+      'Priority',
+      'Status',
+      'Assigned Team',
+      'Assigned Staff',
+      'Requester Name',
+      'Requester Role',
+      'Requester Email',
+      'Created At',
+      'Resolved At',
+      'Description',
+    ];
+
+    const rows = requests.map(r => [
+      `"${r.request_code || `AIT-${r.id}`}"`,
+      `"${(r.title || '').replace(/"/g, '""')}"`,
+      `"${r.category_name || ''}"`,
+      `"${r.department || ''}"`,
+      `"${r.location || ''}"`,
+      `"${r.room_number || ''}"`,
+      r.priority,
+      r.status,
+      `"${r.assigned_team || 'Unassigned'}"`,
+      `"${r.assigned_to_name || 'Unassigned'}"`,
+      `"${r.requester_name || ''}"`,
+      `"${r.requester_role || 'student'}"`,
+      r.requester_email || '',
+      new Date(r.created_at).toISOString(),
+      r.resolved_at ? new Date(r.resolved_at).toISOString() : '',
+      `"${(r.description || '').replace(/"/g, '""')}"`,
+    ]);
+
+    return [headers.join(','), ...rows.map(row => row.join(','))].join('\r\n');
+  }
+
+  /**
+   * 7. List Users for User Management
    */
   static async getUsers(options?: { role?: string; is_active?: boolean; search?: string }) {
     const conditions: string[] = [];
@@ -335,14 +499,14 @@ export class AdminService {
     }
 
     if (options?.search && options.search.trim() !== '') {
-      conditions.push(`(full_name ILIKE $${idx} OR email ILIKE $${idx})`);
+      conditions.push(`(full_name ILIKE $${idx} OR email ILIKE $${idx} OR department ILIKE $${idx})`);
       params.push(`%${options.search.trim()}%`);
       idx++;
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const sql = `
-      SELECT id, full_name, email, role, is_active, created_at
+      SELECT id, full_name, email, role, department, phone, is_active, created_at
       FROM users
       ${whereClause}
       ORDER BY created_at DESC
@@ -353,9 +517,9 @@ export class AdminService {
   }
 
   /**
-   * 7. Update User status (active/deactivate) or role
+   * 8. Update User status or role
    */
-  static async updateUser(userId: number, data: { is_active?: boolean; role?: 'user' | 'admin' }, actor: AuthUser) {
+  static async updateUser(userId: number, data: { is_active?: boolean; role?: any; department?: string }, actor: AuthUser) {
     if (userId === actor.id && data.is_active === false) {
       throw new AppError('You cannot deactivate your own admin account', 400);
     }
@@ -379,6 +543,11 @@ export class AdminService {
       params.push(data.role);
     }
 
+    if (data.department !== undefined) {
+      updates.push(`department = $${idx++}`);
+      params.push(data.department);
+    }
+
     if (updates.length === 0) {
       return existing.rows[0];
     }
@@ -388,7 +557,7 @@ export class AdminService {
       UPDATE users
       SET ${updates.join(', ')}
       WHERE id = $${idx}
-      RETURNING id, full_name, email, role, is_active, created_at
+      RETURNING id, full_name, email, role, department, is_active, created_at
     `;
 
     const result = await query(sql, params);
@@ -396,10 +565,10 @@ export class AdminService {
   }
 
   /**
-   * 8. Get Categories list
+   * 9. Get Categories list
    */
   static async getCategories() {
-    const result = await query('SELECT * FROM categories ORDER BY name ASC');
+    const result = await query('SELECT * FROM categories ORDER BY id ASC');
     return result.rows;
   }
 }
