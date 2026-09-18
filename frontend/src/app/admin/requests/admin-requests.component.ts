@@ -458,6 +458,7 @@ import { User } from '../../core/models/user.model';
             <app-activity-timeline [requestId]="activeRequest.id"></app-activity-timeline>
           </div>
         </div>
+      </div>
     </p-dialog>
 
     <!-- 1. ASSIGNMENT DIALOG (FR-2.3) -->
@@ -801,6 +802,8 @@ export class AdminRequestsComponent implements OnInit {
       summary: 'Export Successful',
       detail: `Exported ${list.length} service requests to CSV.`,
     });
+  }
+
   // 0. View Details
   viewDetails(req: ServiceRequest): void {
     this.activeRequest = req;
